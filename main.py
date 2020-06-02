@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import sys
 import json
 import socket
@@ -5,27 +7,13 @@ import logging
 import datetime
 from filehandler import get_strict_responses
 
+HTTP_END = b'\r\n\r\n'
 REQUEST_PARAMS = {
     'Host': 'Host',
     'User-Agent': 'User-Agent',
     'Content-Length': 'Content-Length',
     'Content-Type': 'Content-Type'
 }
-
-#strict_responses = get_last_log()
-
-def read_all(sock, maxbuff, TIMEOUT=5):
-    data = b''
-    sock.settimeout(TIMEOUT)
-    while True:
-        buf = sock.recv(maxbuff)
-        data += buf
-        if not buf or b'\r\n\r\n' in data:
-            break
-    return data
-
-
-HTTP_END = b'\r\n\r\n'
 
 
 def read_all(sock, maxbuff, TIMEOUT=5):
@@ -44,6 +32,7 @@ def read_all(sock, maxbuff, TIMEOUT=5):
     if data:
         return data
     return None
+
 
 def parse_request(request):
     headers = {}
@@ -89,6 +78,7 @@ def make_mock_response(response_prase, code, request_json, strict_responses):
          logging.error(f'Could not find strict response for {request_json}')
          return bytes(str({"problem 2": "JSONDecodeError:"}).encode())
 
+
 def generate_headers(response_prase):
     server = 'Server: python ' + sys.version.split('[')[0].strip() + ' ' +  sys.version.split('[')[1].strip().replace(']', '') + '\r\n'
     date = 'Date: ' + datetime.datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT') + '\r\n'
@@ -117,6 +107,7 @@ def run(strict_responses):
             client_socket.sendall(headers.encode() + json_response)
         client_socket.close()
     server_socket.close()
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,

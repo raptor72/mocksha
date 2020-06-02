@@ -12,6 +12,7 @@ REQUEST_PARAMS = {
     'Content-Type': 'Content-Type'
 }
 
+#strict_responses = get_last_log()
 
 def read_all(sock, maxbuff, TIMEOUT=5):
     data = b''
@@ -23,6 +24,26 @@ def read_all(sock, maxbuff, TIMEOUT=5):
             break
     return data
 
+
+HTTP_END = b'\r\n\r\n'
+
+
+def read_all(sock, maxbuff, TIMEOUT=5):
+    data = b''
+    sock.settimeout(TIMEOUT)
+    while True:
+        buf = sock.recv(maxbuff)
+        data += buf
+        if len(buf) < 1:
+            data = None
+            break
+        if HTTP_END in buf:
+            break
+        if len(data) > 2048:
+            break
+    if data:
+        return data
+    return None
 
 def parse_request(request):
     headers = {}
@@ -48,11 +69,10 @@ def generate_response(request):
     return ('HTTP/1.1 200 OK\r\n', 200, request_json)
 
 
-def make_mock_response(response_prase, code, request_json):
+def make_mock_response(response_prase, code, request_json, strict_responses):
     if code != 200:
         logging.error(f'{response_prase}')
         return bytes(str({"problem 3": "could not find response"}).encode())
-    strict_responses = get_last_log()
     logging.info(f'strict_responses is: {strict_responses}')
     try:
         d = json.loads(request_json)
@@ -66,7 +86,7 @@ def make_mock_response(response_prase, code, request_json):
                 continue
         return bytes(str({"problem 1": "could not find response"}).encode())
     except json.decoder.JSONDecodeError:
-         logging.error('Could not find strict response')
+         logging.error(f'Could not find strict response for {request_json}')
          return bytes(str({"problem 2": "JSONDecodeError:"}).encode())
 
 def generate_headers(response_prase):
@@ -77,14 +97,14 @@ def generate_headers(response_prase):
     return headers
 
 
-def run():
+def run(strict_responses):
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server_socket.bind(("127.0.0.1", 8088))
     server_socket.listen()
     while True:
         client_socket, addr = server_socket.accept()
-        request = read_all(client_socket, maxbuff=2048)
+        request = read_all(client_socket, maxbuff=512)
         logging.info(f'request is: {request}')
         logging.info(f'address is: {addr}')
         if len(request.strip()) == 0:
@@ -93,7 +113,7 @@ def run():
         if request:
             response_prase, code, request_json = generate_response(request.decode('utf-8'))
             headers = generate_headers(response_prase)
-            json_response = make_mock_response(response_prase, code, request_json)
+            json_response = make_mock_response(response_prase, code, request_json, strict_responses)
             client_socket.sendall(headers.encode() + json_response)
         client_socket.close()
     server_socket.close()
@@ -101,4 +121,5 @@ def run():
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
                         format='[%(asctime)s] %(levelname).1s %(message)s', datefmt='%Y.%m.%d %H:%M:%S')
-    run()
+    strict_responses = get_last_log()
+    run(strict_responses)

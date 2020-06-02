@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import os
 import json
 import logging
@@ -9,7 +11,7 @@ def load_sample(files_path):
     return template
 
 
-def get_last_log(logdir="stricts"):
+def get_strict_responses(logdir="stricts"):
     if not os.path.exists(logdir):
         logging.info("Log directory does not exists")
         return
@@ -31,4 +33,4 @@ def get_last_log(logdir="stricts"):
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
                         format='[%(asctime)s] %(levelname).1s %(message)s', datefmt='%Y.%m.%d %H:%M:%S')
-    print(get_last_log())
+    print(get_strict_responses())

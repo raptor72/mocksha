@@ -3,7 +3,7 @@ import json
 import socket
 import logging
 import datetime
-from filehandler import get_last_log
+from filehandler import get_strict_responses
 
 REQUEST_PARAMS = {
     'Host': 'Host',
@@ -121,5 +121,5 @@ def run(strict_responses):
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,
                         format='[%(asctime)s] %(levelname).1s %(message)s', datefmt='%Y.%m.%d %H:%M:%S')
-    strict_responses = get_last_log()
+    strict_responses = get_strict_responses()
     run(strict_responses)

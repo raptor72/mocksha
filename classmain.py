@@ -2,11 +2,11 @@
 
 # -*- coding: utf-8 -*-
 
-
 import json
 import logging
 from optparse import OptionParser
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from filehandler import get_strict_responses
 
 OK = 200
 BAD_REQUEST = 400
@@ -24,9 +24,23 @@ ERRORS = {
 
 
 def method_handler(req):
-    logging.info(f"req is: {req}")
-    logging.info(f"req headers is: {req['headers']}")
-    return req["body"]
+    strict_responses = get_strict_responses()
+    logging.info(f'strict_responses is: {strict_responses}')
+    try:
+        if type(req["body"]) == dict:
+            d = req["body"]
+            for fish in strict_responses:
+                logging.info(f'request_json: {d}')
+                logging.info(f'fish: {fish}')
+                if d in fish:
+                    return fish[-1]
+                else:
+                    continue
+            return {"problem 1": "could not find response"}
+    except json.decoder.JSONDecodeError:
+         logging.error(f'Could not find strict response for {d}')
+         return {"problem 2": "JSONDecodeError:"}
+
 
 class MainHTTPHandler(BaseHTTPRequestHandler):
     router = {
@@ -66,7 +80,6 @@ class MainHTTPHandler(BaseHTTPRequestHandler):
             r = {"response": response, "code": code}
         else:
             r = {"error": response or ERRORS.get(code, "Unknown Error"), "code": code}
-        # context.update(r)
         logging.info(f"r is: {r}")
         self.wfile.write(bytes(str(json.dumps(r)).encode()))
         return r

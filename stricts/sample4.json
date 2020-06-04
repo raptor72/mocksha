@@ -1,0 +1,5 @@
+{
+"apihelper_proxy": {"https":"socks5"},
+"users_file": "users",
+"key3": ["u0", "u1", "u2"]
+}

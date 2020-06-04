@@ -1,0 +1,2 @@
+{\S+: {\S+: \S+}, '\w+': '\w{1,6}', '\S{1,4}': \['\w+', '\w+', '\w+'\]}
+{"regResp0": "value regexp response 0"}

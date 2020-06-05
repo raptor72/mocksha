@@ -7,6 +7,7 @@ import logging
 from optparse import OptionParser
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from filehandler import get_strict_responses
+from reghandler import get_regexp_responses
 
 OK = 200
 BAD_REQUEST = 400
@@ -24,17 +25,23 @@ ERRORS = {
 
 
 def many_people_handler(req):
-    logging.info(f"strict_responses is: {strict_responses}")
     try:
-        if type(req["body"]) == dict:
+        body = req["body"]
+        if type(body) == dict:
+            logging.info(f"request_json: {body}")
             for fish in strict_responses:
-                logging.info(f"request_json: {req['body']}")
                 logging.info(f"fish: {fish}")
-                if req["body"] in fish and req["body"] != fish[-1]:
+                if body in fish and body != fish[-1]:
                     return fish[-1]
                 else:
                     continue
-            logging.error(f"Could not find strict response for {req['body']}")
+            for fish in regexp_responses:
+                matched = fish[0].match(str(body))
+                logging.info(f"matched: {matched}")
+                if matched:
+                    return fish[-1]
+                else:
+                    continue
             return {"problem 1": "could not find response for current request"}
     except json.decoder.JSONDecodeError:
         logging.error("Could not decode request as json")
@@ -89,8 +96,11 @@ if __name__ == "__main__":
     logging.basicConfig(filename=opts.log, level=logging.INFO,
                         format='[%(asctime)s] %(levelname).1s %(message)s', datefmt='%Y.%m.%d %H:%M:%S')
     strict_responses = get_strict_responses()
+    regexp_responses = get_regexp_responses()
     server = HTTPServer(("localhost", opts.port), MainHTTPHandler)
     logging.info("Starting server at %s" % opts.port)
+    logging.info(f"strict_responses is: {strict_responses}")
+    logging.info(f"regexp_responses is: {regexp_responses}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
